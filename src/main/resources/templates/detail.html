@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="'Document: ' + ${doc.filename}">Document Detail</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+    <style>
+        :root {
+            --sand-base: #F6F1E7;
+            --ink-black: #0D0D0D;
+            --ink-soft: #57534E;
+            --glass-gloss: linear-gradient(145deg, rgba(255, 253, 249, 0.86) 0%, rgba(247, 241, 231, 0.60) 100%);
+            --glass-border: rgba(255, 255, 255, 0.92);
+            --glass-shadow:
+                0 14px 36px -8px rgba(28, 22, 14, 0.10),
+                0 4px 12px -2px rgba(28, 22, 14, 0.05),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.98),
+                inset 0 -1px 0 rgba(214, 202, 184, 0.35);
+            --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
+            --black-gloss: linear-gradient(180deg, #27272A 0%, #09090B 100%);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--ink-black);
+            min-height: 100vh;
+            background: var(--sand-base);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.95) 0%, transparent 44%),
+                radial-gradient(circle at 86% 14%, rgba(217, 198, 168, 0.42) 0%, transparent 48%),
+                radial-gradient(circle at 76% 84%, rgba(212, 188, 152, 0.35) 0%, transparent 52%),
+                linear-gradient(135deg, #FAF7F2 0%, #F2EBE0 52%, #EAE0D0 100%);
+        }
+
+        .glass-nav {
+            background: linear-gradient(180deg, rgba(255, 253, 249, 0.84) 0%, rgba(246, 241, 231, 0.72) 100%);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 6px 28px rgba(24, 20, 14, 0.05), inset 0 1px 0 #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+        }
+
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 11px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: -0.025em;
+            color: var(--ink-black);
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: var(--black-gloss);
+            color: #FAF7F2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 6px 18px rgba(13, 13, 13, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        }
+
+        .glass-card {
+            position: relative;
+            background: var(--glass-gloss);
+            backdrop-filter: blur(26px) saturate(190%);
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            border: 1px solid var(--glass-border);
+            border-radius: 22px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.35s var(--ease-fluid), box-shadow 0.35s var(--ease-fluid);
+        }
+
+        .glass-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            pointer-events: none;
+            background: linear-gradient(125deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 42%);
+        }
+
+        .glass-card-header {
+            padding: 1rem 1.4rem;
+            border-bottom: 1px solid rgba(13, 13, 13, 0.07);
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--ink-black);
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 480px;
+            border: none;
+            border-radius: 14px;
+            background: rgba(255, 253, 249, 0.95);
+            box-shadow: inset 0 0 0 1px rgba(13, 13, 13, 0.08);
+        }
+
+        /* Glossy Obsidian OCR Terminal */
+        .ocr-box {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            background: linear-gradient(165deg, #18181B 0%, #09090B 100%);
+            color: #F5F0E6;
+            border-radius: 14px;
+            padding: 1.15rem;
+            height: 290px;
+            overflow-y: auto;
+            resize: vertical;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 24px rgba(13, 13, 13, 0.16);
+            width: 100%;
+            transition: box-shadow 0.25s ease;
+        }
+
+        .ocr-box:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(13, 13, 13, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+        }
+
+        .glass-input {
+            background: rgba(255, 253, 249, 0.84);
+            border: 1px solid rgba(13, 13, 13, 0.12);
+            border-radius: 12px;
+            padding: 0.62rem 0.95rem;
+            font-size: 0.92rem;
+            color: var(--ink-black);
+            box-shadow: inset 0 1px 2px rgba(13, 13, 13, 0.04);
+            transition: all 0.25s ease;
+        }
+
+        .glass-input:focus {
+            background: #ffffff;
+            border-color: var(--ink-black);
+            box-shadow: 0 0 0 4px rgba(13, 13, 13, 0.08);
+            outline: none;
+        }
+
+        .field-label {
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: var(--ink-soft);
+            margin-bottom: 0.35rem;
+        }
+
+        .btn-fluid-primary {
+            position: relative;
+            overflow: hidden;
+            background: var(--black-gloss);
+            border: 1px solid #09090B;
+            color: #FAF7F2;
+            font-weight: 600;
+            border-radius: 13px;
+            padding: 0.8rem 1.25rem;
+            box-shadow: 0 8px 22px rgba(13, 13, 13, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+            transition: all 0.3s var(--ease-fluid);
+        }
+
+        .btn-fluid-primary::before {
+            content: "";
+            position: absolute;
+            top: 0; left: -75%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+            transform: skewX(-22deg);
+            transition: left 0.55s var(--ease-fluid);
+        }
+
+        .btn-fluid-primary:hover::before { left: 135%; }
+
+        .btn-fluid-primary:hover {
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(13, 13, 13, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+        }
+
+        .btn-glass {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(245, 239, 228, 0.68) 100%);
+            border: 1px solid rgba(13, 13, 13, 0.10);
+            border-radius: 11px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--ink-black);
+            box-shadow: 0 2px 8px rgba(13, 13, 13, 0.04), inset 0 1px 0 #fff;
+            transition: all 0.25s var(--ease-fluid);
+        }
+
+        .btn-glass:hover {
+            background: #ffffff;
+            border-color: rgba(13, 13, 13, 0.22);
+            color: var(--ink-black);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(13, 13, 13, 0.08), inset 0 1px 0 #fff;
+        }
+
+        .glass-alert {
+            background: rgba(255, 253, 249, 0.90);
+            backdrop-filter: blur(18px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 26px rgba(24, 20, 14, 0.08);
+        }
+
+        .form-check-input:checked {
+            background-color: #0D0D0D;
+            border-color: #0D0D0D;
+        }
+
+        .text-sand-muted { color: var(--ink-soft) !important; }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(14px);
+            animation: fadeUp 0.5s var(--ease-fluid) forwards;
+        }
+        .delay-1 { animation-delay: 0.06s; }
+        .delay-2 { animation-delay: 0.14s; }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="ambient-bg"></div>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar glass-nav py-2 px-3 px-md-4 mb-4">
+    <div class="container-fluid">
+        <a class="brand-logo" href="/">
+            <span class="brand-icon"><i class="bi bi-file-earmark-text"></i></span>
+            <span>OCR Portal</span>
+        </a>
+        <a href="/" class="btn btn-glass btn-sm px-3 py-2">
+            <i class="bi bi-arrow-left me-1"></i>Back to Library
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid px-3 px-md-4 pb-5" style="max-width: 1440px;">
+
+    <!-- ===== FLASH ===== -->
+    <div th:if="${successMsg}" class="alert glass-alert border-start border-4 border-dark alert-dismissible fade show fade-up mb-3" role="alert">
+        <i class="bi bi-check-circle-fill text-dark me-2"></i>
+        <span class="fw-semibold" th:text="${successMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- ===== HEADER ROW ===== -->
+    <div class="glass-card p-3 p-md-4 mb-4 fade-up">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <div class="text-sand-muted small fw-semibold mb-1">
+                    <a href="/" class="text-decoration-none text-dark">Library</a>
+                    <span class="mx-1">/</span>
+                    <span>Document #<span th:text="${doc.id}"></span></span>
+                </div>
+                <h4 class="mb-2 fw-bold text-dark" th:text="${doc.filename}"></h4>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge rounded-pill text-dark px-3 py-1"
+                          style="background:rgba(255,253,249,0.9);border:1px solid rgba(13,13,13,0.1);"
+                          th:text="${doc.mimeType}"></span>
+                    <span class="badge rounded-pill px-3 py-1"
+                          th:classappend="${doc.status == 'COMPLETED'} ? 'bg-success bg-opacity-15 text-success' :
+                                          (${doc.status == 'FAILED'} ? 'bg-danger bg-opacity-15 text-danger' : 'bg-dark bg-opacity-10 text-dark')"
+                          th:text="${doc.status}"></span>
+                    <span class="badge rounded-pill bg-dark bg-opacity-10 text-dark px-3 py-1" th:text="'Engine: ' + ${doc.ocrEngine}"></span>
+                    <span th:if="${doc.reviewed}" class="badge rounded-pill bg-dark text-white px-3 py-1">
+                        <i class="bi bi-check-lg me-1"></i>Reviewed
+                    </span>
+                    <span th:unless="${doc.reviewed}" class="badge rounded-pill bg-warning bg-opacity-25 text-dark px-3 py-1">
+                        <i class="bi bi-clock me-1"></i>Needs Review
+                    </span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <form th:action="@{/document/{id}/delete(id=${doc.id})}" method="post"
+                      onsubmit="return confirm('Delete this document permanently?')">
+                    <button class="btn btn-glass text-danger px-3 py-2">
+                        <i class="bi bi-trash3 me-1"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ===== LEFT: PREVIEW + RAW TEXT ===== -->
+        <div class="col-lg-6 fade-up delay-1">
+
+            <!-- File Preview -->
+            <div class="glass-card mb-4 overflow-hidden">
+                <div class="glass-card-header d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-eye-fill me-2 text-dark"></i>Document Preview</span>
+                    <a th:href="@{/file/{id}(id=${doc.id})}" target="_blank" class="btn btn-glass btn-sm px-2 py-1">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Open Raw
+                    </a>
+                </div>
+                <div class="p-3">
+                    <iframe th:if="${doc.pdf}"
+                            th:src="@{/file/{id}(id=${doc.id})}"
+                            class="preview-frame"></iframe>
+                    <img th:unless="${doc.pdf}"
+                         th:src="@{/file/{id}(id=${doc.id})}"
+                         class="img-fluid rounded-3" style="max-height:480px; width:100%; object-fit:contain; background: rgba(255,253,249,0.85);"
+                         alt="Document preview"/>
+                </div>
+            </div>
+
+            <!-- Raw OCR Text -->
+            <div class="glass-card overflow-hidden">
+                <div class="glass-card-header d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-terminal-fill me-2 text-dark"></i>Extracted OCR Text</span>
+                    <button type="button" id="copyOcrBtn" class="btn btn-glass btn-sm px-2 py-1">
+                        <i class="bi bi-clipboard me-1"></i>Copy Text
+                    </button>
+                </div>
+                <div class="p-3">
+                    <textarea class="ocr-box" id="rawTextDisplay"
+                              th:text="${doc.rawText}"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== RIGHT: EDIT FORM ===== -->
+        <div class="col-lg-6 fade-up delay-2">
+            <div class="glass-card">
+                <div class="glass-card-header d-flex align-items-center gap-2">
+                    <i class="bi bi-pencil-square text-dark fs-5"></i>
+                    <span>Extracted Fields &amp; Review</span>
+                </div>
+                <div class="p-3 p-md-4">
+                    <form th:action="@{/document/{id}(id=${doc.id})}" method="post">
+
+                        <div class="row g-3 mb-3">
+                            <!-- Invoice Number -->
+                            <div class="col-md-6">
+                                <label class="field-label form-label">
+                                    <i class="bi bi-hash me-1 text-dark"></i>Invoice Number
+                                </label>
+                                <input type="text" name="invoiceNumber" class="form-control glass-input"
+                                       placeholder="e.g. INV-2024-001"
+                                       th:value="${doc.invoiceNumber}"/>
+                            </div>
+
+                            <!-- Invoice Date -->
+                            <div class="col-md-6">
+                                <label class="field-label form-label">
+                                    <i class="bi bi-calendar3 me-1 text-dark"></i>Invoice Date
+                                </label>
+                                <input type="text" name="invoiceDate" class="form-control glass-input"
+                                       placeholder="e.g. 15/01/2024"
+                                       th:value="${doc.invoiceDate}"/>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <!-- Vendor Name -->
+                            <div class="col-md-7">
+                                <label class="field-label form-label">
+                                    <i class="bi bi-building me-1 text-dark"></i>Vendor Name
+                                </label>
+                                <input type="text" name="vendorName" class="form-control glass-input"
+                                       placeholder="e.g. Acme Corporation"
+                                       th:value="${doc.vendorName}"/>
+                            </div>
+
+                            <!-- Total Amount -->
+                            <div class="col-md-5">
+                                <label class="field-label form-label">
+                                    <i class="bi bi-currency-dollar me-1 text-dark"></i>Total Amount
+                                </label>
+                                <input type="text" name="totalAmount" class="form-control glass-input fw-bold"
+                                       placeholder="e.g. $1,234.56"
+                                       th:value="${doc.totalAmount}"/>
+                            </div>
+                        </div>
+
+                        <!-- Raw Text (editable copy sent with form) -->
+                        <div class="mb-3">
+                            <label class="field-label form-label">
+                                <i class="bi bi-file-text me-1 text-dark"></i>Raw OCR Text
+                                <span class="text-sand-muted fw-normal">(synced with left panel)</span>
+                            </label>
+                            <textarea name="rawText" class="form-control glass-input"
+                                      rows="6" style="font-size:.82rem; font-family:'JetBrains Mono', monospace;"
+                                      th:text="${doc.rawText}"></textarea>
+                        </div>
+
+                        <!-- Reviewed Switch -->
+                        <div class="mb-4 p-3 rounded-4" style="background: rgba(255,253,249,0.72); border: 1px solid rgba(13,13,13,0.08); box-shadow: inset 0 1px 0 #fff;">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox"
+                                       name="reviewed" id="reviewedCheck"
+                                       value="true"
+                                       th:checked="${doc.reviewed}"/>
+                                <label class="form-check-label fw-bold text-dark" for="reviewedCheck">
+                                    Mark document as Reviewed &amp; Verified
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Metadata -->
+                        <div class="rounded-4 p-3 mb-4 small" style="background: rgba(13,13,13,0.04); border: 1px solid rgba(13,13,13,0.06);">
+                            <div class="row g-2">
+                                <div class="col-4 text-sand-muted fw-semibold">Uploaded At</div>
+                                <div class="col-8 fw-medium"
+                                     th:text="${#temporals.format(doc.uploadedAt, 'dd MMM yyyy, HH:mm')}"></div>
+                                <div class="col-4 text-sand-muted fw-semibold">Stored Path</div>
+                                <div class="col-8 text-break text-sand-muted" style="font-family:'JetBrains Mono',monospace; font-size:0.75rem;"
+                                     th:text="${doc.storedPath}"></div>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-fluid-primary btn-lg">
+                                <i class="bi bi-floppy2 me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /row -->
+</div><!-- /container -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const formTextarea    = document.querySelector('textarea[name="rawText"]');
+    const displayTextarea = document.getElementById('rawTextDisplay');
+    const copyBtn         = document.getElementById('copyOcrBtn');
+
+    if (formTextarea && displayTextarea) {
+        formTextarea.addEventListener('input', () => {
+            displayTextarea.value = formTextarea.value;
+        });
+        displayTextarea.addEventListener('input', () => {
+            formTextarea.value = displayTextarea.value;
+        });
+    }
+
+    if (copyBtn && displayTextarea) {
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(displayTextarea.value);
+                const orig = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="bi bi-check2 text-dark me-1"></i>Copied!';
+                setTimeout(() => { copyBtn.innerHTML = orig; }, 1800);
+            } catch (e) {
+                displayTextarea.select();
+                document.execCommand('copy');
+            }
+        });
+    }
+</script>
+</body>
+</html>
