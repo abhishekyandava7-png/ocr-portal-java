@@ -1,0 +1,15 @@
+# Smart Document Digitizer & OCR Portal
+
+A pure Java web application built with **Spring Boot 3**, **Thymeleaf**, **Apache PDFBox**, and **Tesseract OCR (Tess4J)** that extracts searchable text and structured invoice data from digital PDFs, scanned PDFs, and images.
+
+## Key Features
+- **Hybrid OCR Pipeline:** Uses Apache PDFBox for instant text extraction on digital PDFs and falls back to Tesseract OCR (via Tess4J) for scanned PDFs and PNG/JPG images.
+- **Structured Invoice Extraction:** Automatically parses invoice numbers, vendor names, dates, and total amounts.
+- **Human-in-the-Loop Review:** Split-screen preview to inspect extracted text, correct fields, and mark documents as reviewed.
+- **Search & Multi-Format Export:** Full-text search across uploaded documents and one-click export to **CSV**, **Excel (.xlsx)**, and **PDF**.
+
+## How to Run Locally
+1. Install **Java 21**, **Maven**, and **Tesseract OCR** (`C:\Program Files\Tesseract-OCR`).
+2. Run the application:
+   ```bash
+   mvn spring-boot:run
